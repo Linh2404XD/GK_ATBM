@@ -2,8 +2,10 @@ package view;
 
 import controller.CaesarController;
 import controller.SubstitutionController;
+import controller.TranspositionController;
 import controller.VigenereController;
 import model.SubstitutionCipherModel;
+import model.TranspositionCipherModel;
 import model.VigenereCipherModel;
 import model.CaesarCipherModel;
 
@@ -42,7 +44,7 @@ public class AppView extends JFrame {
         encryptButton.setFont(buttonFont);
         JButton decryptButton = new JButton("Giải mã");
         decryptButton.setFont(buttonFont);
-        JComboBox<String> algorithmBox = new JComboBox<>(new String[]{"--- Thuật toán mã hóa cổ điển ---", "Mã hóa Caesar", "Mã hóa Vigenère", "Mã hóa thay thế", "Mã hóa hoán vị    ", "--- Thuật toán băm cơ bản ---", "MD5", "SHA-1"});
+        JComboBox<String> algorithmBox = new JComboBox<>(new String[]{"--- Thuật toán mã hóa cổ điển ---", "Mã hóa Caesar", "Mã hóa Vigenère", "Mã hóa thay thế", "Mã hóa hoán vị", "--- Thuật toán băm cơ bản ---", "MD5", "SHA-1"});
         algorithmBox.setFont(comboFont);
 
         algorithmBox.setSelectedItem("Mã hóa Caesar");
@@ -202,15 +204,17 @@ public class AppView extends JFrame {
         gbc.gridy = 7;
         basicPanel.add(outputScrollPane, gbc);
 
-//   -----------------     MA HOA CAESAR     -------------------------------------
+//   -----------------     MA HOA CO DIEN     -------------------------------------
         // Khai báo các đối tượng cho từng thuật toán
         CaesarCipherModel caesarModel = new CaesarCipherModel();
         VigenereCipherModel vigenereModel = new VigenereCipherModel();
         SubstitutionCipherModel substitutionModel = new SubstitutionCipherModel();
+        TranspositionCipherModel model = new TranspositionCipherModel();
 
         CaesarController caesarController = new CaesarController(caesarModel);
         VigenereController vigenereController = new VigenereController(vigenereModel);
         SubstitutionController substitutionController = new SubstitutionController(substitutionModel);
+        TranspositionController transpositionController = new TranspositionController(model);
 
 // Xử lý sự kiện chọn thuật toán
         algorithmBox.addActionListener(e -> {
@@ -237,6 +241,9 @@ public class AppView extends JFrame {
                     KeyField.setEnabled(true);
                     generateKeyButton.setEnabled(true);
                     inputKeyButton.setEnabled(true);
+                    break;
+                case "Mã hóa hoán vị":
+                    viewMapButton.setEnabled(false);
                     break;
                 default:
                     // Nếu không chọn thuật toán nào, tắt các thành phần UI
@@ -274,6 +281,10 @@ public class AppView extends JFrame {
                 case "Mã hóa thay thế":
                     encryptedText = substitutionController.handleEncryption(plainText);
                     break;
+                case "Mã hóa hoán vị":
+                    transpositionController.setKey(key);
+                    encryptedText = transpositionController.handleEncryption(plainText);
+                    break;
             }
 
             outputText.setText(encryptedText);
@@ -308,6 +319,10 @@ public class AppView extends JFrame {
                 case "Mã hóa thay thế":
                     decryptedText = substitutionController.handleDecryption(cipherText);
                     break;
+                case "Mã hóa hoán vị":
+                    transpositionController.setKey(key);
+                    decryptedText = transpositionController.handleDecryption(cipherText);
+                    break;
             }
 
             outputText.setText(decryptedText);
@@ -338,6 +353,9 @@ public class AppView extends JFrame {
                         // Lưu bảng thay thế để sử dụng sau
                         substitutionController.setCustomSubstitutionMap(substitutionMap);
                         viewMapButton.setEnabled(true); // Kích hoạt nút "Xem lại bảng"
+                        break;
+                    case "Mã hóa hoán vị":
+                        generatedKey = transpositionController.generateKey(5); // Mặc định khóa 5 ký tự
                         break;
                     default:
                         JOptionPane.showMessageDialog(this, "Vui lòng chọn thuật toán hợp lệ.", "Thông báo", JOptionPane.WARNING_MESSAGE);
@@ -370,6 +388,7 @@ public class AppView extends JFrame {
                     case "Mã hóa thay thế":
                         substitutionController.setCustomSubstitutionMap(parseSubstitutionMap(keyInput));
                         break;
+
                     default:
                         JOptionPane.showMessageDialog(this, "Vui lòng chọn thuật toán hợp lệ.", "Thông báo", JOptionPane.WARNING_MESSAGE);
                         return;
