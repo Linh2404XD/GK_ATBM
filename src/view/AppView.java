@@ -10,6 +10,7 @@ import model.VigenereCipherModel;
 import model.CaesarCipherModel;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -119,10 +120,22 @@ public class AppView extends JFrame {
         });
         // nút xem lại bảng thay thế
         JButton viewMapButton = new JButton("Xem lại bảng");
-        viewMapButton.setEnabled(false); // Vô hiệu hóa ban đầu
+        viewMapButton.setEnabled(false);
+        viewMapButton.setVisible(false);
         gbc.gridx = 1;
         gbc.gridy = 5;
         basicPanel.add(viewMapButton, gbc); // Đặt vị trí phù hợp trên giao diện
+
+        // nút xem bang chu cai Vigerene
+        JButton viewAlphabetButton = new JButton("Bảng chữ cái");
+        viewAlphabetButton.setEnabled(true);
+        viewAlphabetButton.setVisible(false);
+        gbc.gridx = 1;
+        gbc.gridy = 5;
+        basicPanel.add(viewAlphabetButton, gbc);
+        viewAlphabetButton.addActionListener(e -> {
+            showVigenereMatrix();
+        });
 
         // Căn chỉnh các thành phần
         gbc.gridx = 0;
@@ -227,29 +240,32 @@ public class AppView extends JFrame {
                     KeyField.setEnabled(true);
                     generateKeyButton.setEnabled(true);
                     inputKeyButton.setEnabled(true);
-                    viewMapButton.setEnabled(false);
+
                     break;
                 case "Mã hóa Vigenère":
-                    // Kích hoạt các thành phần UI cho thuật toán Vigenère
-                    KeyField.setEnabled(true); // Khóa cho Vigenère
-                    generateKeyButton.setEnabled(true); // Tạo khóa Vigenère
-                    inputKeyButton.setEnabled(true);
-                    viewMapButton.setEnabled(false);
-                    break;
-                case "Mã hóa thay thế":
-                    // Kích hoạt các thành phần UI cho thuật toán thay thế
                     KeyField.setEnabled(true);
                     generateKeyButton.setEnabled(true);
                     inputKeyButton.setEnabled(true);
+                    viewAlphabetButton.setVisible(true);
+
+                    break;
+                case "Mã hóa thay thế":
+                    KeyField.setEnabled(true);
+                    generateKeyButton.setEnabled(true);
+                    inputKeyButton.setEnabled(true);
+                    viewMapButton.setVisible(true);
                     break;
                 case "Mã hóa hoán vị":
-                    viewMapButton.setEnabled(false);
+                    viewMapButton.setVisible(false);
+                    viewAlphabetButton.setVisible(false);
+
                     break;
                 default:
                     // Nếu không chọn thuật toán nào, tắt các thành phần UI
                     KeyField.setEnabled(false);
                     generateKeyButton.setEnabled(false);
                     inputKeyButton.setEnabled(false);
+                    viewAlphabetButton.setVisible(true);
                     break;
             }
         });
@@ -698,5 +714,48 @@ public class AppView extends JFrame {
         }
 
         return map;
+    }
+    // Hiển thị bảng Vigenère 26x26 với các đường gạch chia từng ô
+    // Hiển thị bảng Vigenère 26x26 với các đường gạch chia từng ô
+    private void showVigenereMatrix() {
+        // Tạo bảng 26x26
+        String[][] matrixData = new String[26][26];
+        for (int i = 0; i < 26; i++) {
+            for (int j = 0; j < 26; j++) {
+                matrixData[i][j] = String.valueOf((char) ((i + j) % 26 + 'A'));
+            }
+        }
+
+        // Tạo một DefaultTableModel để làm bảng không thể chỉnh sửa
+        DefaultTableModel model = new DefaultTableModel(matrixData, getColumnHeaders()) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Không cho phép chỉnh sửa các ô
+            }
+        };
+
+        // Tạo một JTable với model và thiết lập các thuộc tính bảng
+        JTable vigenereTable = new JTable(model);
+        vigenereTable.setFont(new Font("Arial", Font.PLAIN, 14));
+        vigenereTable.setRowHeight(30);
+        vigenereTable.setGridColor(Color.BLACK);
+        vigenereTable.setShowGrid(true);  // Hiển thị các đường viền giữa các ô
+        vigenereTable.setFillsViewportHeight(true);
+
+        // Tạo JScrollPane để cuộn bảng nếu cần thiết
+        JScrollPane scrollPane = new JScrollPane(vigenereTable);
+        scrollPane.setPreferredSize(new Dimension(600, 400));
+
+        // Hiển thị bảng trong hộp thoại
+        JOptionPane.showMessageDialog(this, scrollPane, "Bảng chữ cái Vigenère", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    // Tạo tên cột cho bảng
+    private String[] getColumnHeaders() {
+        String[] columns = new String[26];
+        for (int i = 0; i < 26; i++) {
+            columns[i] = String.valueOf((char) ('A' + i));
+        }
+        return columns;
     }
 }
