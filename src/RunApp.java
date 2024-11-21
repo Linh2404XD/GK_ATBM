@@ -7,6 +7,7 @@ public class RunApp {
         SwingUtilities.invokeLater(() -> {
             AppView app = new AppView();
             app.setVisible(true);
+            app.setLocationRelativeTo(null);
         });
     }
 }

@@ -1,12 +1,18 @@
 package view;
 
 import controller.CaesarController;
+import controller.SubstitutionController;
+import controller.VigenereController;
+import model.SubstitutionCipherModel;
+import model.VigenereCipherModel;
 import model.CaesarCipherModel;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
+import java.util.HashMap;
+import java.util.Map;
 
 public class AppView extends JFrame {
 
@@ -15,9 +21,10 @@ public class AppView extends JFrame {
         setSize(900, 700);  // Tăng kích thước cửa sổ
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        Font labelFont = new Font("Arial", Font.BOLD, 18);
-        Font textFont = new Font("Arial", Font.PLAIN, 18);
-        Font buttonFont = new Font("Arial", Font.BOLD, 18);
+        Font labelFont = new Font("Arial", Font.BOLD, 15);
+        Font textFont = new Font("Arial", Font.PLAIN, 15);
+        Font buttonFont = new Font("Arial", Font.BOLD, 15);
+        Font comboFont = new Font("Arial", Font.PLAIN, 15);
 
         JTabbedPane tabbedPane = new JTabbedPane();
 //----------------------------
@@ -32,10 +39,14 @@ public class AppView extends JFrame {
         inputText.setFont(new Font("Arial", Font.PLAIN, 16));
         JScrollPane scrollPane = new JScrollPane(inputText);
         JButton encryptButton = new JButton("Mã hóa");
+        encryptButton.setFont(buttonFont);
         JButton decryptButton = new JButton("Giải mã");
+        decryptButton.setFont(buttonFont);
         JComboBox<String> algorithmBox = new JComboBox<>(new String[]{"--- Thuật toán mã hóa cổ điển ---", "Mã hóa Caesar", "Mã hóa Vigenère", "Mã hóa thay thế", "Mã hóa hoán vị    ", "--- Thuật toán băm cơ bản ---", "MD5", "SHA-1"});
+        algorithmBox.setFont(comboFont);
 
         algorithmBox.setSelectedItem("Mã hóa Caesar");
+
         // Danh sách các mục không hợp lệ
         java.util.List<String> invalidOptions = java.util.Arrays.asList(
                 "--- Thuật toán mã hóa cổ điển ---",
@@ -53,7 +64,7 @@ public class AppView extends JFrame {
                 String item = (String) value;
 
                 if (invalidOptions.contains(item)) {
-                    setForeground(Color.GRAY); // Màu xám cho các mục không hợp lệ
+                    setForeground(Color.BLUE); // Màu xám cho các mục không hợp lệ
                 } else {
                     setForeground(Color.BLACK); // Màu đen cho các mục hợp lệ
                 }
@@ -67,6 +78,7 @@ public class AppView extends JFrame {
             if (invalidOptions.contains(selectedItem)) {
                 // Đặt lại lựa chọn trước đó
                 algorithmBox.setSelectedItem(previousSelection[0]);
+
             } else {
                 // Cập nhật lựa chọn trước đó
                 previousSelection[0] = selectedItem;
@@ -74,23 +86,27 @@ public class AppView extends JFrame {
         });
 //        JComboBox<String> modeBox = new JComboBox<>(new String[]{"Chế độ 1", "Chế độ 2"});
         JTextArea outputText = new JTextArea(6, 35); // Tăng kích thước textarea
-        outputText.setFont(new Font("Arial", Font.PLAIN, 16));
-
-        JTextField KeyField = new JTextField(35);
-        JButton generateKeyButton = new JButton("Tạo khóa");
-        JButton inputKeyButton = new JButton("Nhập khóa");
+        outputText.setFont(textFont);
         outputText.setEditable(false);
         JScrollPane outputScrollPane = new JScrollPane(outputText);
 
+        JTextField KeyField = new JTextField(35);
+        JButton generateKeyButton = new JButton("Tạo khóa");
+        generateKeyButton.setFont(buttonFont);
+        JButton inputKeyButton = new JButton("Chọn khóa");
+        inputKeyButton.setFont(buttonFont);
+
         // Nút chọn file
         JButton chooseFileButton = new JButton("Chọn File");
+        chooseFileButton.setFont(buttonFont);
         JTextField filePathField = new JTextField(35); // Tăng kích thước JTextField
         filePathField.setEditable(false);
 
         // nút Copy
         JButton copyButton = new JButton("Sao chép");
+        copyButton.setFont(buttonFont);
         gbc.gridx = 2;
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         basicPanel.add(copyButton, gbc);
         copyButton.addActionListener(e -> {
             String textToCopy = outputText.getText(); // Lấy nội dung từ JTextArea
@@ -99,15 +115,23 @@ public class AppView extends JFrame {
             clipboard.setContents(stringSelection, null); // Sao chép vào clipboard
             JOptionPane.showMessageDialog(this, "Đã sao chép văn bản vào clipboard.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
         });
+        // nút xem lại bảng thay thế
+        JButton viewMapButton = new JButton("Xem lại bảng");
+        viewMapButton.setEnabled(false); // Vô hiệu hóa ban đầu
+        gbc.gridx = 1;
+        gbc.gridy = 5;
+        basicPanel.add(viewMapButton, gbc); // Đặt vị trí phù hợp trên giao diện
 
         // Căn chỉnh các thành phần
         gbc.gridx = 0;
         gbc.gridy = 0;
-        basicPanel.add(new JLabel("Nhập văn bản:"), gbc);
+        JLabel algorithmLabel = new JLabel("Chọn thuật toán:");
+        algorithmLabel.setFont(labelFont); // Thiết lập font cho JLabel
+        basicPanel.add(algorithmLabel, gbc);
 
         gbc.gridx = 1;
         gbc.gridy = 0;
-        basicPanel.add(scrollPane, gbc);
+        basicPanel.add(algorithmBox, gbc);
 
         // Chọn file
         gbc.gridx = 0;
@@ -118,27 +142,37 @@ public class AppView extends JFrame {
         gbc.gridy = 1;
         basicPanel.add(filePathField, gbc);
 
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        basicPanel.add(new JLabel("Chọn thuật toán:"), gbc);
-
         gbc.gridx = 1;
         gbc.gridy = 2;
-        basicPanel.add(algorithmBox, gbc);
+        JLabel orTextLabel = new JLabel("Hoặc");
+        orTextLabel.setFont(labelFont); // Thiết lập font cho JLabel
+        basicPanel.add(orTextLabel, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 3;
-        basicPanel.add(new JLabel("Nhập khóa:"), gbc);
+        JLabel inputTextLabel = new JLabel("Nhập văn bản:");
+        inputTextLabel.setFont(labelFont); // Thiết lập font cho JLabel
+        basicPanel.add(inputTextLabel, gbc);
 
         gbc.gridx = 1;
         gbc.gridy = 3;
-        basicPanel.add(KeyField, gbc);
+        basicPanel.add(scrollPane, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 4;
-        basicPanel.add(generateKeyButton, gbc);
+        JLabel keyLabel = new JLabel("Nhập khóa:");
+        keyLabel.setFont(labelFont); // Thiết lập font cho JLabel
+        basicPanel.add(keyLabel, gbc);
 
         gbc.gridx = 1;
+        gbc.gridy = 4;
+        basicPanel.add(KeyField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        basicPanel.add(generateKeyButton, gbc);
+
+        gbc.gridx = 2;
         gbc.gridy = 4;
         basicPanel.add(inputKeyButton, gbc);
 //        gbc.gridx = 0;
@@ -150,83 +184,240 @@ public class AppView extends JFrame {
 //        basicPanel.add(modeBox, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 6;
         basicPanel.add(encryptButton, gbc);
 
         gbc.gridx = 1;
-        gbc.gridy = 5;
+        gbc.gridy = 6;
         basicPanel.add(decryptButton, gbc);
 
         // Output
         gbc.gridx = 0;
-        gbc.gridy = 6;
-        basicPanel.add(new JLabel("Kết quả:"), gbc);
+        gbc.gridy = 7;
+        JLabel outputTextLabel = new JLabel("Kết quả:");
+        outputTextLabel.setFont(labelFont); // Thiết lập font cho JLabel
+        basicPanel.add(outputTextLabel, gbc);
 
         gbc.gridx = 1;
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         basicPanel.add(outputScrollPane, gbc);
 
 //   -----------------     MA HOA CAESAR     -------------------------------------
+        // Khai báo các đối tượng cho từng thuật toán
         CaesarCipherModel caesarModel = new CaesarCipherModel();
-        CaesarController caesarController = new CaesarController(caesarModel);
+        VigenereCipherModel vigenereModel = new VigenereCipherModel();
+        SubstitutionCipherModel substitutionModel = new SubstitutionCipherModel();
 
+        CaesarController caesarController = new CaesarController(caesarModel);
+        VigenereController vigenereController = new VigenereController(vigenereModel);
+        SubstitutionController substitutionController = new SubstitutionController(substitutionModel);
+
+// Xử lý sự kiện chọn thuật toán
+        algorithmBox.addActionListener(e -> {
+            String selectedItem = (String) algorithmBox.getSelectedItem();
+
+            // Kiểm tra xem người dùng chọn thuật toán nào
+            switch (selectedItem) {
+                case "Mã hóa Caesar":
+                    // Kích hoạt các thành phần UI cho thuật toán Caesar
+                    KeyField.setEnabled(true);
+                    generateKeyButton.setEnabled(true);
+                    inputKeyButton.setEnabled(true);
+                    viewMapButton.setEnabled(false);
+                    break;
+                case "Mã hóa Vigenère":
+                    // Kích hoạt các thành phần UI cho thuật toán Vigenère
+                    KeyField.setEnabled(true); // Khóa cho Vigenère
+                    generateKeyButton.setEnabled(true); // Tạo khóa Vigenère
+                    inputKeyButton.setEnabled(true);
+                    viewMapButton.setEnabled(false);
+                    break;
+                case "Mã hóa thay thế":
+                    // Kích hoạt các thành phần UI cho thuật toán thay thế
+                    KeyField.setEnabled(true);
+                    generateKeyButton.setEnabled(true);
+                    inputKeyButton.setEnabled(true);
+                    break;
+                default:
+                    // Nếu không chọn thuật toán nào, tắt các thành phần UI
+                    KeyField.setEnabled(false);
+                    generateKeyButton.setEnabled(false);
+                    inputKeyButton.setEnabled(false);
+                    break;
+            }
+        });
+
+// Xử lý sự kiện mã hóa
         encryptButton.addActionListener(e -> {
             String plainText = inputText.getText();
-            int key;
-            try {
-                key = Integer.parseInt(KeyField.getText());
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "Khóa phải là số nguyên.", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
+            String key = KeyField.getText();
+            String encryptedText = "";
+
             if (plainText.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Vui lòng nhập văn bản cần mã hóa.", "Thông báo", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            String encryptedText = caesarController.handleEncryption(plainText, key);
-            outputText.setText(encryptedText);
 
-            // Hiển thị thông báo mã hóa thành công
+            String selectedAlgorithm = (String) algorithmBox.getSelectedItem();
+            switch (selectedAlgorithm) {
+                case "Mã hóa Caesar":
+                    try {
+                        int caesarKey = Integer.parseInt(key);
+                        encryptedText = caesarController.handleEncryption(plainText, caesarKey);
+                    } catch (NumberFormatException ex) {
+                        JOptionPane.showMessageDialog(this, "Khóa phải là số nguyên.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                    break;
+                case "Mã hóa Vigenère":
+                    encryptedText = vigenereController.handleEncryption(plainText, key);
+                    break;
+                case "Mã hóa thay thế":
+                    encryptedText = substitutionController.handleEncryption(plainText);
+                    break;
+            }
+
+            outputText.setText(encryptedText);
             JOptionPane.showMessageDialog(this, "Mã hóa thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
         });
 
+// Xử lý sự kiện giải mã
         decryptButton.addActionListener(e -> {
             String cipherText = inputText.getText();
-            int key;
-            try {
-                key = Integer.parseInt(KeyField.getText());
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "Khóa phải là số nguyên.", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            if (cipherText.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Vui lòng nhập văn bản cần mã hóa.", "Thông báo", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            String decryptedText = caesarController.handleDecryption(cipherText, key);
-            outputText.setText(decryptedText);
+            String key = KeyField.getText();
+            String decryptedText = "";
 
-            // Hiển thị thông báo giải mã thành công
+            if (cipherText.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Vui lòng nhập văn bản cần giải mã.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            String selectedAlgorithm = (String) algorithmBox.getSelectedItem();
+
+            switch (selectedAlgorithm) {
+                case "Mã hóa Caesar":
+                    try {
+                        int caesarKey = Integer.parseInt(key);
+                        decryptedText = caesarController.handleDecryption(cipherText, caesarKey);
+                    } catch (NumberFormatException ex) {
+                        JOptionPane.showMessageDialog(this, "Khóa phải là số nguyên.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                    break;
+                case "Mã hóa Vigenère":
+                    decryptedText = vigenereController.handleDecryption(cipherText, key);
+                    break;
+                case "Mã hóa thay thế":
+                    decryptedText = substitutionController.handleDecryption(cipherText);
+                    break;
+            }
+
+            outputText.setText(decryptedText);
             JOptionPane.showMessageDialog(this, "Giải mã thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
         });
 
-        // Nút "Tạo khóa"
+// Tạo khóa cho các thuật toán
         generateKeyButton.addActionListener(e -> {
-            int generatedKey = caesarController.generateKey();
-            KeyField.setText(String.valueOf(generatedKey)); // Hiển thị khóa trong JTextField
+            String selectedAlgorithm = (String) algorithmBox.getSelectedItem();
+            String generatedKey = "";
+            Map<Character, Character> substitutionMap;
+
+            try {
+                switch (selectedAlgorithm) {
+                    case "Mã hóa Caesar":
+                        generatedKey = String.valueOf(caesarController.generateKey());
+                        break;
+                    case "Mã hóa Vigenère":
+                        generatedKey = vigenereController.generateKey();
+                        break;
+                    case "Mã hóa thay thế":
+                        substitutionMap = substitutionController.generateRandomSubstitutionMap();
+                        StringBuilder substitutionDisplay = new StringBuilder("Bảng thay thế:\n");
+                        substitutionMap.forEach((key, value) -> substitutionDisplay.append(key).append(" -> ").append(value).append("\n"));
+                        // Hiển thị bảng thay thế
+                        JOptionPane.showMessageDialog(this, substitutionDisplay.toString(), "Bảng thay thế", JOptionPane.INFORMATION_MESSAGE);
+
+                        // Lưu bảng thay thế để sử dụng sau
+                        substitutionController.setCustomSubstitutionMap(substitutionMap);
+                        viewMapButton.setEnabled(true); // Kích hoạt nút "Xem lại bảng"
+                        break;
+                    default:
+                        JOptionPane.showMessageDialog(this, "Vui lòng chọn thuật toán hợp lệ.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                        return;
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Không thể tạo khóa: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            KeyField.setText(generatedKey);
         });
 
-        // Nút "Nhập khóa"
+// Nhập khóa
         inputKeyButton.addActionListener(e -> {
             String keyInput = KeyField.getText();
+            String selectedAlgorithm = (String) algorithmBox.getSelectedItem();
+
             try {
-                caesarController.setKey(keyInput);
+                switch (selectedAlgorithm) {
+                    case "Mã hóa Caesar":
+                        caesarController.setKey(keyInput);
+                        break;
+                    case "Mã hóa Vigenère":
+                        if (keyInput.isEmpty()) {
+                            throw new IllegalArgumentException("Khóa Vigenère không được để trống.");
+                        }
+                        vigenereController.setKey(keyInput);
+                        break;
+                    case "Mã hóa thay thế":
+                        substitutionController.setCustomSubstitutionMap(parseSubstitutionMap(keyInput));
+                        break;
+                    default:
+                        JOptionPane.showMessageDialog(this, "Vui lòng chọn thuật toán hợp lệ.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                        return;
+                }
+
                 JOptionPane.showMessageDialog(this, "Khóa đã được thiết lập thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
             } catch (IllegalArgumentException ex) {
-                JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage(), "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
 
+// xem lại bảng
+        viewMapButton.addActionListener(e -> {
+            Map<Character, Character> substitutionMap = substitutionController.getCurrentSubstitutionMap();
+
+            if (substitutionMap == null || substitutionMap.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Chưa có bảng thay thế được tạo.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            StringBuilder substitutionDisplay = new StringBuilder("Bảng thay thế hiện tại:\n");
+            substitutionMap.forEach((key, value) -> substitutionDisplay.append(key).append(" -> ").append(value).append("\n"));
+
+            // Tạo JPanel để hiển thị bảng thay thế và nút sao chép
+            JPanel panel = new JPanel(new BorderLayout());
+            JTextArea substitutionArea = new JTextArea(substitutionDisplay.toString());
+            substitutionArea.setEditable(false);
+            substitutionArea.setFont(new Font("Monospaced", Font.PLAIN, 14));
+
+            JScrollPane scrollMapPane = new JScrollPane(substitutionArea);
+            panel.add(scrollMapPane, BorderLayout.CENTER);
+
+            // Nút sao chép khoá
+            JButton copyMapButton = new JButton("Sao chép khóa");
+            copyMapButton.addActionListener(copyEvent -> {
+                String substitutionText = substitutionDisplay.toString();
+                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(substitutionText), null);
+                JOptionPane.showMessageDialog(panel, "Khóa đã được sao chép.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            });
+            panel.add(copyMapButton, BorderLayout.SOUTH);
+
+            // Hiển thị trong JDialog
+            JDialog dialog = new JDialog((Frame) null, "Bảng thay thế", true);
+            dialog.getContentPane().add(panel);
+            dialog.setSize(400, 400);
+            dialog.setLocationRelativeTo(null);
+            dialog.setVisible(true);
+        });
 
 //-------------------------------
         // Tab "Mã hóa đối xứng"
@@ -476,4 +667,17 @@ public class AppView extends JFrame {
     }
 
 
+    private Map<Character, Character> parseSubstitutionMap(String keyInput) {
+        Map<Character, Character> map = new HashMap<>();
+        String[] mappings = keyInput.split(",");
+        for (String mapping : mappings) {
+            String[] pair = mapping.trim().split("->");
+            if (pair.length != 2 || pair[0].length() != 1 || pair[1].length() != 1) {
+                throw new IllegalArgumentException("Bảng thay thế không hợp lệ. Định dạng: A->B,C->D,...");
+            }
+            map.put(pair[0].charAt(0), pair[1].charAt(0));
+        }
+
+        return map;
+    }
 }
