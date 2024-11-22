@@ -2,6 +2,10 @@ package controller;
 
 import model.CaesarCipherModel;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+
 public class CaesarController {
 
     private final CaesarCipherModel model;
@@ -16,20 +20,6 @@ public class CaesarController {
         return model.generateKey();
     }
 
-    // Thiết lập khóa từ người dùng
-    public void setKey(String keyInput) {
-        try {
-            int key = Integer.parseInt(keyInput);
-            model.setKey(key);
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Khóa phải là số nguyên.");
-        }
-    }
-
-    // Lấy khóa hiện tại
-    public int getKey() {
-        return model.getKey();
-    }
 
     // Mã hóa văn bản
     public String handleEncryption(String plainText, int key) {
@@ -39,4 +29,18 @@ public class CaesarController {
     public String handleDecryption(String cipherText, int key) {
         return CaesarCipherModel.decrypt(cipherText, key);
     }
+
+    // Phương thức loadKey
+    public void loadKey(File file) throws IOException {
+        if (file == null || !file.exists()) {
+            throw new IllegalArgumentException("File không hợp lệ hoặc không tồn tại.");
+        }
+        // Gọi loadKey từ model để xử lý trực tiếp
+        model.loadKey(file);
+    }
+    // Lấy khóa hiện tại
+    public int getKey() {
+        return model.getKey();
+    }
+
 }

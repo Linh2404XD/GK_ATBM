@@ -1,5 +1,9 @@
 package model;
 
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Random;
 
 public class CaesarCipherModel {
@@ -18,12 +22,17 @@ public class CaesarCipherModel {
         return this.key;
     }
 
-    // Phương thức thiết lập khóa
-    public void setKey(int key) {
-        if (key < 1 || key > 25) {
-            throw new IllegalArgumentException("Khóa phải nằm trong khoảng từ 1 đến 25.");
+    // Phương thức tải khóa từ file
+    public void loadKey(File file) throws IOException {
+        String content = Files.readString(file.toPath()).trim(); // Đọc nội dung file
+        try {
+            this.key = Integer.parseInt(content); // Chuyển đổi nội dung thành số nguyên và lưu
+            if (key < 1 || key > 25) {
+                throw new IllegalArgumentException("Khóa phải nằm trong khoảng từ 1 đến 25.");
+            }
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("File phải chứa một số nguyên đại diện cho khóa.");
         }
-        this.key = key;
     }
 
     // Lấy khóa hiện tại
@@ -62,5 +71,6 @@ public class CaesarCipherModel {
         }
         return decrypted.toString();
     }
+
 }
 

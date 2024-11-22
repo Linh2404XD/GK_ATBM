@@ -14,7 +14,8 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
-import java.util.HashMap;
+import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 
 public class AppView extends JFrame {
@@ -27,7 +28,7 @@ public class AppView extends JFrame {
         Font labelFont = new Font("Arial", Font.BOLD, 15);
         Font textFont = new Font("Arial", Font.PLAIN, 15);
         Font buttonFont = new Font("Arial", Font.BOLD, 15);
-        Font comboFont = new Font("Arial", Font.PLAIN, 15);
+        Font comboFont = new Font("Arial", Font.BOLD, 15);
 
         JTabbedPane tabbedPane = new JTabbedPane();
 //----------------------------
@@ -96,8 +97,8 @@ public class AppView extends JFrame {
         JTextField KeyField = new JTextField(35);
         JButton generateKeyButton = new JButton("Tạo khóa");
         generateKeyButton.setFont(buttonFont);
-        JButton inputKeyButton = new JButton("Chọn khóa");
-        inputKeyButton.setFont(buttonFont);
+        JButton loadKeyButton = new JButton("Chọn khóa");
+        loadKeyButton.setFont(buttonFont);
 
         // Nút chọn file
         JButton chooseFileButton = new JButton("Chọn File");
@@ -118,13 +119,6 @@ public class AppView extends JFrame {
             clipboard.setContents(stringSelection, null); // Sao chép vào clipboard
             JOptionPane.showMessageDialog(this, "Đã sao chép văn bản vào clipboard.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
         });
-        // nút xem lại bảng thay thế
-        JButton viewMapButton = new JButton("Xem lại bảng");
-        viewMapButton.setEnabled(false);
-        viewMapButton.setVisible(false);
-        gbc.gridx = 1;
-        gbc.gridy = 5;
-        basicPanel.add(viewMapButton, gbc); // Đặt vị trí phù hợp trên giao diện
 
         // nút xem bang chu cai Vigerene
         JButton viewAlphabetButton = new JButton("Bảng chữ cái");
@@ -189,7 +183,7 @@ public class AppView extends JFrame {
 
         gbc.gridx = 2;
         gbc.gridy = 4;
-        basicPanel.add(inputKeyButton, gbc);
+        basicPanel.add(loadKeyButton, gbc);
 //        gbc.gridx = 0;
 //        gbc.gridy = 3;
 //        basicPanel.add(new JLabel("Chọn chế độ:"), gbc);
@@ -239,24 +233,25 @@ public class AppView extends JFrame {
                     // Kích hoạt các thành phần UI cho thuật toán Caesar
                     KeyField.setEnabled(true);
                     generateKeyButton.setEnabled(true);
-                    inputKeyButton.setEnabled(true);
+                    loadKeyButton.setEnabled(true);
+                    viewAlphabetButton.setVisible(false);
 
                     break;
                 case "Mã hóa Vigenère":
                     KeyField.setEnabled(true);
                     generateKeyButton.setEnabled(true);
-                    inputKeyButton.setEnabled(true);
+                    loadKeyButton.setEnabled(true);
                     viewAlphabetButton.setVisible(true);
 
                     break;
                 case "Mã hóa thay thế":
                     KeyField.setEnabled(true);
                     generateKeyButton.setEnabled(true);
-                    inputKeyButton.setEnabled(true);
-                    viewMapButton.setVisible(true);
+                    loadKeyButton.setEnabled(true);
+
                     break;
                 case "Mã hóa hoán vị":
-                    viewMapButton.setVisible(false);
+
                     viewAlphabetButton.setVisible(false);
 
                     break;
@@ -264,7 +259,7 @@ public class AppView extends JFrame {
                     // Nếu không chọn thuật toán nào, tắt các thành phần UI
                     KeyField.setEnabled(false);
                     generateKeyButton.setEnabled(false);
-                    inputKeyButton.setEnabled(false);
+                    loadKeyButton.setEnabled(false);
                     viewAlphabetButton.setVisible(true);
                     break;
             }
@@ -362,13 +357,20 @@ public class AppView extends JFrame {
                     case "Mã hóa thay thế":
                         substitutionMap = substitutionController.generateRandomSubstitutionMap();
                         StringBuilder substitutionDisplay = new StringBuilder("Bảng thay thế:\n");
-                        substitutionMap.forEach((key, value) -> substitutionDisplay.append(key).append(" -> ").append(value).append("\n"));
+                        StringBuilder generatedKeyBuilder = new StringBuilder(); // Dùng để lưu các ký tự sau dấu "->"
+
+                        substitutionMap.forEach((key, value) -> {
+                            substitutionDisplay.append(key).append(" -> ").append(value).append(" ");
+                            generatedKeyBuilder.append(value); // Lấy các ký tự sau dấu "->" và thêm vào generatedKey
+                        });
+
                         // Hiển thị bảng thay thế
                         JOptionPane.showMessageDialog(this, substitutionDisplay.toString(), "Bảng thay thế", JOptionPane.INFORMATION_MESSAGE);
 
                         // Lưu bảng thay thế để sử dụng sau
                         substitutionController.setCustomSubstitutionMap(substitutionMap);
-                        viewMapButton.setEnabled(true); // Kích hoạt nút "Xem lại bảng"
+                        generatedKey = generatedKeyBuilder.toString();
+                        KeyField.setText(generatedKey);
                         break;
                     case "Mã hóa hoán vị":
                         generatedKey = transpositionController.generateKey(5); // Mặc định khóa 5 ký tự
@@ -385,73 +387,86 @@ public class AppView extends JFrame {
             KeyField.setText(generatedKey);
         });
 
-// Nhập khóa
-        inputKeyButton.addActionListener(e -> {
-            String keyInput = KeyField.getText();
+// Nút chọn khóa
+        loadKeyButton.addActionListener(e -> {
             String selectedAlgorithm = (String) algorithmBox.getSelectedItem();
 
-            try {
-                switch (selectedAlgorithm) {
-                    case "Mã hóa Caesar":
-                        caesarController.setKey(keyInput);
-                        break;
-                    case "Mã hóa Vigenère":
-                        if (keyInput.isEmpty()) {
-                            throw new IllegalArgumentException("Khóa Vigenère không được để trống.");
-                        }
-                        vigenereController.setKey(keyInput);
-                        break;
-                    case "Mã hóa thay thế":
-                        substitutionController.setCustomSubstitutionMap(parseSubstitutionMap(keyInput));
-                        break;
+            // Mở hộp thoại chọn file
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Chọn file chứa khóa");
+            int result = fileChooser.showOpenDialog(this);
 
-                    default:
-                        JOptionPane.showMessageDialog(this, "Vui lòng chọn thuật toán hợp lệ.", "Thông báo", JOptionPane.WARNING_MESSAGE);
-                        return;
+            if (result == JFileChooser.APPROVE_OPTION) {
+                File selectedFile = fileChooser.getSelectedFile();
+
+                try {
+                    switch (selectedAlgorithm) {
+                        case "Mã hóa Caesar":
+                            // Gọi phương thức loadKey từ CaesarController
+                            caesarController.loadKey(selectedFile);
+                            JOptionPane.showMessageDialog(
+                                    this,
+                                    "Khóa đã được tải thành công!",
+                                    "Thông báo",
+                                    JOptionPane.INFORMATION_MESSAGE
+                            );
+                            // Hiển thị khóa vào KeyField
+                            KeyField.setText(String.valueOf(caesarController.getKey()));
+                            break;
+
+                        case "Mã hóa Vigenère":
+                            // Gọi loadKey từ VigenereController
+                            vigenereController.loadKey(selectedFile);
+                            JOptionPane.showMessageDialog(
+                                    this,
+                                    "Khóa Vigenère đã được tải thành công!",
+                                    "Thông báo",
+                                    JOptionPane.INFORMATION_MESSAGE
+                            );
+                            KeyField.setText(vigenereController.getKey());
+                            break;
+
+                        case "Mã hóa thay thế":
+                            substitutionController.loadKey(selectedFile);
+                            JOptionPane.showMessageDialog(
+                                    this,
+                                    "Khóa đã được tải thành công!",
+                                    "Thông báo",
+                                    JOptionPane.INFORMATION_MESSAGE
+                            );
+                            // Hiển thị khóa vào KeyField
+                            KeyField.setText(substitutionController.getKey());
+                            break;
+
+                        case "Mã hóa hoán vị":
+                            // Gọi loadKey từ VigenereController
+                            transpositionController.loadKey(selectedFile);
+                            JOptionPane.showMessageDialog(
+                                    this,
+                                    "Khóa đã được tải thành công!",
+                                    "Thông báo",
+                                    JOptionPane.INFORMATION_MESSAGE
+                            );
+                            // Hiển thị khóa vào KeyField
+                            KeyField.setText(transpositionController.getKey());
+                            break;
+                        default:
+                            JOptionPane.showMessageDialog(
+                                    this,
+                                    "Chỉ hỗ trợ tải khóa cho các thuật toán Caesar và Vigenère.",
+                                    "Thông báo",
+                                    JOptionPane.WARNING_MESSAGE
+                            );
+                    }
+                } catch (IllegalArgumentException | IOException ex) {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Lỗi: " + ex.getMessage(),
+                            "Lỗi",
+                            JOptionPane.ERROR_MESSAGE
+                    );
                 }
-
-                JOptionPane.showMessageDialog(this, "Khóa đã được thiết lập thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-            } catch (IllegalArgumentException ex) {
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
-        });
-
-// xem lại bảng
-        viewMapButton.addActionListener(e -> {
-            Map<Character, Character> substitutionMap = substitutionController.getCurrentSubstitutionMap();
-
-            if (substitutionMap == null || substitutionMap.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Chưa có bảng thay thế được tạo.", "Thông báo", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            StringBuilder substitutionDisplay = new StringBuilder("Bảng thay thế hiện tại:\n");
-            substitutionMap.forEach((key, value) -> substitutionDisplay.append(key).append(" -> ").append(value).append("\n"));
-
-            // Tạo JPanel để hiển thị bảng thay thế và nút sao chép
-            JPanel panel = new JPanel(new BorderLayout());
-            JTextArea substitutionArea = new JTextArea(substitutionDisplay.toString());
-            substitutionArea.setEditable(false);
-            substitutionArea.setFont(new Font("Monospaced", Font.PLAIN, 14));
-
-            JScrollPane scrollMapPane = new JScrollPane(substitutionArea);
-            panel.add(scrollMapPane, BorderLayout.CENTER);
-
-            // Nút sao chép khoá
-            JButton copyMapButton = new JButton("Sao chép khóa");
-            copyMapButton.addActionListener(copyEvent -> {
-                String substitutionText = substitutionDisplay.toString();
-                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(substitutionText), null);
-                JOptionPane.showMessageDialog(panel, "Khóa đã được sao chép.", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-            });
-            panel.add(copyMapButton, BorderLayout.SOUTH);
-
-            // Hiển thị trong JDialog
-            JDialog dialog = new JDialog((Frame) null, "Bảng thay thế", true);
-            dialog.getContentPane().add(panel);
-            dialog.setSize(400, 400);
-            dialog.setLocationRelativeTo(null);
-            dialog.setVisible(true);
         });
 
 //-------------------------------
@@ -702,20 +717,6 @@ public class AppView extends JFrame {
     }
 
 
-    private Map<Character, Character> parseSubstitutionMap(String keyInput) {
-        Map<Character, Character> map = new HashMap<>();
-        String[] mappings = keyInput.split(",");
-        for (String mapping : mappings) {
-            String[] pair = mapping.trim().split("->");
-            if (pair.length != 2 || pair[0].length() != 1 || pair[1].length() != 1) {
-                throw new IllegalArgumentException("Bảng thay thế không hợp lệ. Định dạng: A->B,C->D,...");
-            }
-            map.put(pair[0].charAt(0), pair[1].charAt(0));
-        }
-
-        return map;
-    }
-    // Hiển thị bảng Vigenère 26x26 với các đường gạch chia từng ô
     // Hiển thị bảng Vigenère 26x26 với các đường gạch chia từng ô
     private void showVigenereMatrix() {
         // Tạo bảng 26x26

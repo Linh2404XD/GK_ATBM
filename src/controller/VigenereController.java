@@ -2,6 +2,11 @@ package controller;
 
 import model.VigenereCipherModel;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+
 public class VigenereController {
     private final VigenereCipherModel model;
     private String currentKey;
@@ -39,21 +44,18 @@ public class VigenereController {
         return this.currentKey;
     }
 
-    // Thiết lập khóa
-    public void setKey(String key) {
-        if (key == null || key.trim().isEmpty()) {
-            throw new IllegalArgumentException("Khóa không được để trống.");
-        }
-        for (char c : key.toCharArray()) {
-            if (!Character.isLetter(c)) {
-                throw new IllegalArgumentException("Khóa chỉ được chứa các ký tự chữ cái.");
-            }
-        }
-        this.currentKey = key.toUpperCase();
-    }
 
     // Lấy khóa hiện tại
     public String getKey() {
-        return this.currentKey;
+        return model.getKey(); // Lấy khóa từ model
+    }
+
+    // Phương thức tải khóa từ file
+    public void loadKey(File selectedFile) throws IOException {
+        try {
+            model.loadKey(selectedFile); // Gọi phương thức loadKey trong model
+        } catch (IOException | IllegalArgumentException e) {
+            throw new IllegalArgumentException("Lỗi khi tải khóa từ file: " + e.getMessage());
+        }
     }
 }

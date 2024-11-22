@@ -1,5 +1,9 @@
 package model;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -129,5 +133,17 @@ public class TranspositionCipherModel {
             }
         }
         return decryptedText.toString().stripTrailing();
+    }
+    public void loadKey(File selectedFile) throws IOException {
+        try (BufferedReader reader = new BufferedReader(new FileReader(selectedFile))) {
+            String fileContent = reader.readLine(); // Đọc một dòng từ file
+            if (fileContent != null && fileContent.length() > 0) {
+                this.setKey(fileContent.trim()); // Sử dụng phương thức setKey để thiết lập khóa
+            } else {
+                throw new IllegalArgumentException("Khóa không hợp lệ. Khóa không thể trống.");
+            }
+        } catch (IOException e) {
+            throw new IOException("Lỗi khi đọc file: " + e.getMessage());
+        }
     }
 }

@@ -1,6 +1,17 @@
 package model;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+
 public class VigenereCipherModel {
+    private String key; // Lưu khóa cho thuật toán Vigenère
+
+    // Hàm khởi tạo
+    public VigenereCipherModel() {
+        this.key = ""; // Khóa mặc định ban đầu
+    }
 
     // Mã hóa văn bản bằng thuật toán Vigenère
     public String encrypt(String plainText, String key) {
@@ -56,25 +67,23 @@ public class VigenereCipherModel {
         }
         return fullKey.toString();
     }
-    // In ra ma trận Vigenère 26x26
-    public void printVigenereMatrix() {
-        char[][] matrix = new char[26][26];
 
-        // Tạo bảng chữ cái
-        for (int i = 0; i < 26; i++) {
-            for (int j = 0; j < 26; j++) {
-                matrix[i][j] = (char) ((i + j) % 26 + 'A'); // Dịch chuyển các ký tự của bảng chữ cái
+    // Phương thức để tải khóa từ file
+    public void loadKey(File selectedFile) throws IOException {
+        try (BufferedReader reader = new BufferedReader(new FileReader(selectedFile))) {
+            String fileContent = reader.readLine(); // Đọc một dòng duy nhất từ file
+            if (fileContent != null) {
+                // Kiểm tra khóa hợp lệ và cập nhật
+                this.key = fileContent.trim().toUpperCase(); // Khóa Vigenère phải là chữ hoa
+            } else {
+                throw new IllegalArgumentException("File không chứa khóa.");
             }
-        }
-
-        // Hiển thị ma trận
-        System.out.println("Vigenere Cipher 26x26 Matrix:");
-        for (int i = 0; i < 26; i++) {
-            for (int j = 0; j < 26; j++) {
-                System.out.print(matrix[i][j] + " ");
-            }
-            System.out.println(); // Dòng mới sau mỗi hàng
+        } catch (IOException e) {
+            throw new IOException("Lỗi khi đọc file: " + e.getMessage());
         }
     }
 
+    public String getKey() {
+        return this.key;
+    }
 }
