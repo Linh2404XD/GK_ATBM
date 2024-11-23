@@ -1,13 +1,7 @@
 package view;
 
-import controller.CaesarController;
-import controller.SubstitutionController;
-import controller.TranspositionController;
-import controller.VigenereController;
-import model.SubstitutionCipherModel;
-import model.TranspositionCipherModel;
-import model.VigenereCipherModel;
-import model.CaesarCipherModel;
+import controller.*;
+import model.*;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -16,6 +10,8 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 public class AppView extends JFrame {
@@ -52,7 +48,7 @@ public class AppView extends JFrame {
         algorithmBox.setSelectedItem("Mã hóa Caesar");
 
         // Danh sách các mục không hợp lệ
-        java.util.List<String> invalidOptions = java.util.Arrays.asList(
+        List<String> invalidOptions = Arrays.asList(
                 "--- Thuật toán mã hóa cổ điển ---",
                 "--- Thuật toán băm cơ bản ---"
         );
@@ -104,7 +100,22 @@ public class AppView extends JFrame {
         JButton chooseFileButton = new JButton("Chọn File");
         chooseFileButton.setFont(buttonFont);
         JTextField filePathField = new JTextField(35); // Tăng kích thước JTextField
-        filePathField.setEditable(false);
+        filePathField.setEditable(true);
+        filePathField.setVisible(false);
+        chooseFileButton.setVisible(false);
+
+        chooseFileButton.addActionListener(e -> {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY); // Chỉ cho phép chọn file
+            int returnValue = fileChooser.showOpenDialog(this); // Hiển thị hộp thoại chọn file
+
+            if (returnValue == JFileChooser.APPROVE_OPTION) {
+                File selectedFile = fileChooser.getSelectedFile();
+                String filePath = selectedFile.getAbsolutePath();
+                filePathField.setText(filePath); // Đưa đường dẫn file vào ô filePathField
+            }
+
+        });
 
         // nút Copy
         JButton copyButton = new JButton("Sao chép");
@@ -122,7 +133,6 @@ public class AppView extends JFrame {
 
         // nút xem bang chu cai Vigerene
         JButton viewAlphabetButton = new JButton("Bảng chữ cái");
-        viewAlphabetButton.setEnabled(true);
         viewAlphabetButton.setVisible(false);
         gbc.gridx = 1;
         gbc.gridy = 5;
@@ -130,6 +140,24 @@ public class AppView extends JFrame {
         viewAlphabetButton.addActionListener(e -> {
             showVigenereMatrix();
         });
+
+        // nut hash cho giai thuat Hash
+        JButton hashButton = new JButton("Hash");
+        hashButton.setFont(buttonFont);
+        hashButton.setEnabled(true);
+        hashButton.setVisible(false);
+        gbc.gridx = 1;
+        gbc.gridy = 6;
+        basicPanel.add(hashButton, gbc);
+
+        JButton hashFileButton = new JButton("Hash File");
+        hashButton.setFont(buttonFont);
+        hashButton.setEnabled(true);
+        hashButton.setVisible(false);
+        gbc.gridx = 1;
+        gbc.gridy = 6;
+        basicPanel.add(hashButton, gbc);
+
 
         // Căn chỉnh các thành phần
         gbc.gridx = 0;
@@ -154,13 +182,14 @@ public class AppView extends JFrame {
         gbc.gridx = 1;
         gbc.gridy = 2;
         JLabel orTextLabel = new JLabel("Hoặc");
-        orTextLabel.setFont(labelFont); // Thiết lập font cho JLabel
+        orTextLabel.setFont(labelFont);
         basicPanel.add(orTextLabel, gbc);
+        orTextLabel.setVisible(false);
 
         gbc.gridx = 0;
         gbc.gridy = 3;
         JLabel inputTextLabel = new JLabel("Nhập văn bản:");
-        inputTextLabel.setFont(labelFont); // Thiết lập font cho JLabel
+        inputTextLabel.setFont(labelFont);
         basicPanel.add(inputTextLabel, gbc);
 
         gbc.gridx = 1;
@@ -184,13 +213,6 @@ public class AppView extends JFrame {
         gbc.gridx = 2;
         gbc.gridy = 4;
         basicPanel.add(loadKeyButton, gbc);
-//        gbc.gridx = 0;
-//        gbc.gridy = 3;
-//        basicPanel.add(new JLabel("Chọn chế độ:"), gbc);
-
-//        gbc.gridx = 1;
-//        gbc.gridy = 3;
-//        basicPanel.add(modeBox, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 6;
@@ -226,6 +248,13 @@ public class AppView extends JFrame {
 // Xử lý sự kiện chọn thuật toán
         algorithmBox.addActionListener(e -> {
             String selectedItem = (String) algorithmBox.getSelectedItem();
+            KeyField.setText("");
+            outputText.setText("");
+            encryptButton.setVisible(true);
+            decryptButton.setVisible(true);
+            filePathField.setVisible(false);
+            chooseFileButton.setVisible(false);
+            orTextLabel.setVisible(false);
 
             // Kiểm tra xem người dùng chọn thuật toán nào
             switch (selectedItem) {
@@ -235,6 +264,7 @@ public class AppView extends JFrame {
                     generateKeyButton.setEnabled(true);
                     loadKeyButton.setEnabled(true);
                     viewAlphabetButton.setVisible(false);
+                    hashButton.setVisible(false);
 
                     break;
                 case "Mã hóa Vigenère":
@@ -242,17 +272,36 @@ public class AppView extends JFrame {
                     generateKeyButton.setEnabled(true);
                     loadKeyButton.setEnabled(true);
                     viewAlphabetButton.setVisible(true);
+                    hashButton.setVisible(false);
 
                     break;
                 case "Mã hóa thay thế":
                     KeyField.setEnabled(true);
                     generateKeyButton.setEnabled(true);
                     loadKeyButton.setEnabled(true);
-
-                    break;
-                case "Mã hóa hoán vị":
+                    hashButton.setVisible(false);
 
                     viewAlphabetButton.setVisible(false);
+                    break;
+                case "Mã hóa hoán vị":
+                    viewAlphabetButton.setVisible(false);
+                    hashButton.setVisible(false);
+
+
+                    break;
+                case "MD5":
+                    KeyField.setVisible(false);
+                    generateKeyButton.setVisible(false);
+                    loadKeyButton.setEnabled(true);
+                    viewAlphabetButton.setVisible(false);
+                    encryptButton.setVisible(false);
+                    decryptButton.setVisible(false);
+                    hashButton.setVisible(true);
+                    keyLabel.setVisible(false);
+                    loadKeyButton.setVisible(false);
+                    filePathField.setVisible(true);
+                    chooseFileButton.setVisible(true);
+                    orTextLabel.setVisible(true);
 
                     break;
                 default:
@@ -260,7 +309,9 @@ public class AppView extends JFrame {
                     KeyField.setEnabled(false);
                     generateKeyButton.setEnabled(false);
                     loadKeyButton.setEnabled(false);
-                    viewAlphabetButton.setVisible(true);
+                    filePathField.setVisible(false);
+                    chooseFileButton.setVisible(false);
+                    orTextLabel.setVisible(false);
                     break;
             }
         });
@@ -468,7 +519,60 @@ public class AppView extends JFrame {
                 }
             }
         });
+// Xử lý sự kiện hash
+        hashButton.addActionListener(e -> {
+            String selectedAlgorithm = (String) algorithmBox.getSelectedItem();
+            String filePath = filePathField.getText(); // Lấy nội dung từ ô nhập file
+            String inputHashText = inputText.getText(); // Lấy nội dung từ ô nhập văn bản
+            String hashResult = "";
 
+            if (selectedAlgorithm == null || selectedAlgorithm.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn thuật toán hash.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            try {
+                switch (selectedAlgorithm) {
+                    case "MD5":
+                        MD5Model md5Model = new MD5Model();
+                        MD5Controller md5Controller = new MD5Controller(md5Model);
+
+                        if (!filePath.isEmpty()) {
+                            // Kiểm tra xem đường dẫn có hợp lệ không
+                            File file = new File(filePath);
+                            if (!file.exists() || !file.isFile()) {
+                                JOptionPane.showMessageDialog(this, "Đường dẫn file không hợp lệ hoặc file không tồn tại.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                                return;
+                            }
+                            // Nếu ô file có đường dẫn, hash file
+                            hashResult = md5Controller.hashFile(filePath);
+                        } else if (!inputHashText.isEmpty()) {
+                            // Nếu ô text có văn bản, hash text
+                            hashResult = md5Controller.hash(inputHashText);
+                        } else {
+                            JOptionPane.showMessageDialog(this, "Vui lòng nhập văn bản hoặc chọn file để hash.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                            return;
+                        }
+                        break;
+
+                    // Các thuật toán hash khác có thể thêm vào đây
+                }
+
+                // Hiển thị kết quả hash trong ô output
+                outputText.setText(hashResult);
+                JOptionPane.showMessageDialog(this, "Hash thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Đã xảy ra lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        // Sự kiện focus vào inputTextField
+        inputText.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent e) {
+                filePathField.setText(""); // Xóa nội dung filePathField khi inputTextField được chọn
+            }
+        });
 //-------------------------------
         // Tab "Mã hóa đối xứng"
         JPanel symmetricPanel = new JPanel();
