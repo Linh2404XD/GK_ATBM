@@ -186,6 +186,7 @@ public class AppView extends JFrame {
         basicPanel.add(orTextLabel, gbc);
         orTextLabel.setVisible(false);
 
+
         gbc.gridx = 0;
         gbc.gridy = 3;
         JLabel inputTextLabel = new JLabel("Nhập văn bản:");
@@ -206,7 +207,7 @@ public class AppView extends JFrame {
         gbc.gridy = 4;
         basicPanel.add(KeyField, gbc);
 
-        gbc.gridx = 0;
+        gbc.gridx = 1;
         gbc.gridy = 5;
         basicPanel.add(generateKeyButton, gbc);
 
@@ -255,7 +256,10 @@ public class AppView extends JFrame {
             filePathField.setVisible(false);
             chooseFileButton.setVisible(false);
             orTextLabel.setVisible(false);
-
+            keyLabel.setVisible(true);
+            KeyField.setVisible(true);
+            loadKeyButton.setVisible(true);
+            generateKeyButton.setVisible(true);
             // Kiểm tra xem người dùng chọn thuật toán nào
             switch (selectedItem) {
                 case "Mã hóa Caesar":
@@ -302,17 +306,33 @@ public class AppView extends JFrame {
                     filePathField.setVisible(true);
                     chooseFileButton.setVisible(true);
                     orTextLabel.setVisible(true);
+                    break;
+                case "SHA-1":
+                    KeyField.setVisible(false);
+                    generateKeyButton.setVisible(false);
+                    loadKeyButton.setEnabled(true);
+                    viewAlphabetButton.setVisible(false);
+                    encryptButton.setVisible(false);
+                    decryptButton.setVisible(false);
+                    hashButton.setVisible(true);
+                    keyLabel.setVisible(false);
+                    loadKeyButton.setVisible(false);
+                    filePathField.setVisible(true);
+                    chooseFileButton.setVisible(true);
+                    orTextLabel.setVisible(true);
 
                     break;
                 default:
-                    // Nếu không chọn thuật toán nào, tắt các thành phần UI
-                    KeyField.setEnabled(false);
-                    generateKeyButton.setEnabled(false);
+                    KeyField.setVisible(false);
                     loadKeyButton.setEnabled(false);
+                    viewAlphabetButton.setVisible(false);
+                    encryptButton.setVisible(false);
+                    decryptButton.setVisible(false);
+                    hashButton.setVisible(false);
+
                     filePathField.setVisible(false);
                     chooseFileButton.setVisible(false);
                     orTextLabel.setVisible(false);
-                    break;
             }
         });
 
@@ -554,9 +574,27 @@ public class AppView extends JFrame {
                             return;
                         }
                         break;
+                    case "SHA-1":
+                        SHA1Model sha1Model = new SHA1Model();
+                        SHA1Controller sha1Controller = new SHA1Controller(sha1Model);
 
-                    // Các thuật toán hash khác có thể thêm vào đây
+                        if (!filePath.isEmpty()) {
+                            // Nếu có đường dẫn file, hash file
+                            hashResult = sha1Controller.hashFile(filePath);
+                        } else if (!inputHashText.isEmpty()) {
+                            // Nếu có văn bản, hash văn bản
+                            hashResult = sha1Controller.hash(inputHashText);
+                        } else {
+                            JOptionPane.showMessageDialog(this, "Vui lòng nhập văn bản hoặc chọn file để hash.", "Thông báo", JOptionPane.WARNING_MESSAGE);
+                            return;
+                        }
+                        break;
+
+                    // Các thuật toán hash khác (ví dụ: MD5, SHA-256) có thể được xử lý ở đây
                 }
+
+                // Hiển thị kết quả hash
+
 
                 // Hiển thị kết quả hash trong ô output
                 outputText.setText(hashResult);
@@ -582,12 +620,18 @@ public class AppView extends JFrame {
         inputSymmetric.setFont(new Font("Arial", Font.PLAIN, 16));
         JScrollPane scrollSymmetric = new JScrollPane(inputSymmetric);
         JButton encryptSymmetricButton = new JButton("Mã hóa");
+        encryptSymmetricButton.setFont(buttonFont);
         JButton decryptSymmetricButton = new JButton("Giải mã");
+        decryptSymmetricButton.setFont(buttonFont);
         JComboBox<String> symmetricAlgorithmBox = new JComboBox<>(new String[]{"AES", "DES", "Triple DES"});
+        symmetricAlgorithmBox.setFont(comboFont);
         JComboBox<String> symmetricModeBox = new JComboBox<>(new String[]{"ECB", "CBC", "CFB", "OFB", "GCM"});
+        symmetricModeBox.setFont(comboFont);
         JTextField symmetricKeyField = new JTextField(35);
         JButton generateSymmetricKeyButton = new JButton("Tạo khóa");
-        JButton inputSymmetricKeyButton = new JButton("Nhập khóa");
+        generateSymmetricKeyButton.setFont(buttonFont);
+        JButton inputSymmetricKeyButton = new JButton("Chọn khóa");
+        inputSymmetricKeyButton.setFont(buttonFont);
         JTextArea outputSymmetricText = new JTextArea(6, 35);
         outputSymmetricText.setFont(new Font("Arial", Font.PLAIN, 16));
         outputSymmetricText.setEditable(false);
@@ -595,57 +639,67 @@ public class AppView extends JFrame {
 
         // Nút chọn file
         JButton chooseSymmetricFileButton = new JButton("Chọn File");
+        chooseSymmetricFileButton.setFont(buttonFont);
         JTextField symmetricFilePathField = new JTextField(35);
         symmetricFilePathField.setEditable(false);
 
         // Căn chỉnh các thành phần
         gbc.gridx = 0;
-        gbc.gridy = 0;
-        symmetricPanel.add(new JLabel("Nhập văn bản:"), gbc);
+        gbc.gridy = 2;
+        JLabel inputLabelSymemtric = new JLabel("Nhập văn bản:");
+        inputLabelSymemtric.setFont(labelFont);
+        symmetricPanel.add(inputLabelSymemtric, gbc);
+
 
         gbc.gridx = 1;
-        gbc.gridy = 0;
+        gbc.gridy = 2;
         symmetricPanel.add(scrollSymmetric, gbc);
 
         // Chọn file
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 3;
         symmetricPanel.add(chooseSymmetricFileButton, gbc);
 
         gbc.gridx = 1;
-        gbc.gridy = 1;
+        gbc.gridy = 3;
         symmetricPanel.add(symmetricFilePathField, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 2;
-        symmetricPanel.add(new JLabel("Chọn thuật toán:"), gbc);
+        gbc.gridy = 0;
+        JLabel chooseLabelSymemtric = new JLabel("Chọn thuật toán:");
+        chooseLabelSymemtric.setFont(labelFont);
+        symmetricPanel.add(chooseLabelSymemtric, gbc);
 
         gbc.gridx = 1;
-        gbc.gridy = 2;
+        gbc.gridy = 0;
         symmetricPanel.add(symmetricAlgorithmBox, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 3;
-        symmetricPanel.add(new JLabel("Chọn chế độ:"), gbc);
+        gbc.gridy = 1;
+        JLabel chooseModeLabelSymemtric = new JLabel("Chọn chế độ:");
+        chooseModeLabelSymemtric.setFont(labelFont);
+        symmetricPanel.add(chooseModeLabelSymemtric, gbc);
 
         gbc.gridx = 1;
-        gbc.gridy = 3;
+        gbc.gridy = 1;
         symmetricPanel.add(symmetricModeBox, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 4;
-        symmetricPanel.add(new JLabel("Nhập khóa:"), gbc);
+        JLabel inputKeyLabelSymemtric = new JLabel("Nhập khóa:");
+        inputKeyLabelSymemtric.setFont(labelFont);
+        symmetricPanel.add(inputKeyLabelSymemtric, gbc);
 
         gbc.gridx = 1;
         gbc.gridy = 4;
         symmetricPanel.add(symmetricKeyField, gbc);
 
-        gbc.gridx = 0;
+        gbc.gridx = 1;
         gbc.gridy = 5;
         symmetricPanel.add(generateSymmetricKeyButton, gbc);
 
-        gbc.gridx = 1;
-        gbc.gridy = 5;
+        gbc.gridx = 2;
+        gbc.gridy = 4;
         symmetricPanel.add(inputSymmetricKeyButton, gbc);
 
         gbc.gridx = 0;
@@ -659,7 +713,9 @@ public class AppView extends JFrame {
         // Output
         gbc.gridx = 0;
         gbc.gridy = 7;
-        symmetricPanel.add(new JLabel("Kết quả:"), gbc);
+        JLabel outputLabelSymemtric = new JLabel("Kết quả:");
+        outputLabelSymemtric.setFont(labelFont);
+        symmetricPanel.add(outputLabelSymemtric, gbc);
 
         gbc.gridx = 1;
         gbc.gridy = 7;
@@ -673,11 +729,16 @@ public class AppView extends JFrame {
         inputAsymmetric.setFont(new Font("Arial", Font.PLAIN, 16));
         JScrollPane scrollAsymmetric = new JScrollPane(inputAsymmetric);
         JButton encryptAsymmetricButton = new JButton("Mã hóa");
+        encryptAsymmetricButton.setFont(buttonFont);
         JButton decryptAsymmetricButton = new JButton("Giải mã");
+        decryptAsymmetricButton.setFont(buttonFont);
         JComboBox<String> asymmetricAlgorithmBox = new JComboBox<>(new String[]{"RSA", "ECC"});
+        asymmetricAlgorithmBox.setFont(comboFont);
         JTextField asymmetricKeyField = new JTextField(35);
         JButton generateAsymmetricKeyButton = new JButton("Tạo khóa");
+        generateAsymmetricKeyButton.setFont(buttonFont);
         JButton inputAsymmetricKeyButton = new JButton("Nhập khóa");
+        inputAsymmetricKeyButton.setFont(buttonFont);
         JTextArea outputAsymmetricText = new JTextArea(6, 35);
         outputAsymmetricText.setFont(new Font("Arial", Font.PLAIN, 16));
         outputAsymmetricText.setEditable(false);
@@ -685,16 +746,19 @@ public class AppView extends JFrame {
 
         // Nút chọn file
         JButton chooseAsymmetricFileButton = new JButton("Chọn File");
+        chooseAsymmetricFileButton.setFont(buttonFont);
         JTextField asymmetricFilePathField = new JTextField(35);
         asymmetricFilePathField.setEditable(false);
 
         // Căn chỉnh các thành phần
         gbc.gridx = 0;
-        gbc.gridy = 0;
-        asymmetricPanel.add(new JLabel("Nhập văn bản:"), gbc);
+        gbc.gridy = 2;
+        JLabel inputTextLabelAsymmetric = new JLabel("Nhập văn bản:");
+        inputTextLabelAsymmetric.setFont(labelFont);
+        asymmetricPanel.add(inputTextLabelAsymmetric, gbc);
 
         gbc.gridx = 1;
-        gbc.gridy = 0;
+        gbc.gridy = 2;
         asymmetricPanel.add(scrollAsymmetric, gbc);
 
         // Chọn file
@@ -707,16 +771,20 @@ public class AppView extends JFrame {
         asymmetricPanel.add(asymmetricFilePathField, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 2;
-        asymmetricPanel.add(new JLabel("Chọn thuật toán:"), gbc);
+        gbc.gridy = 0;
+        JLabel chooseLabelAsymmetric = new JLabel("Chọn thuật toán:");
+        chooseLabelAsymmetric.setFont(labelFont);
+        asymmetricPanel.add(chooseLabelAsymmetric, gbc);
 
         gbc.gridx = 1;
-        gbc.gridy = 2;
+        gbc.gridy = 0;
         asymmetricPanel.add(asymmetricAlgorithmBox, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 3;
-        asymmetricPanel.add(new JLabel("Nhập khóa:"), gbc);
+        JLabel inputKeyLabelAsymmetric = new JLabel("Nhập khóa:");
+        inputKeyLabelAsymmetric.setFont(labelFont);
+        asymmetricPanel.add(inputKeyLabelAsymmetric, gbc);
 
         gbc.gridx = 1;
         gbc.gridy = 3;
@@ -741,7 +809,9 @@ public class AppView extends JFrame {
         // Output
         gbc.gridx = 0;
         gbc.gridy = 6;
-        asymmetricPanel.add(new JLabel("Kết quả:"), gbc);
+        JLabel outputLabelAsymmetric = new JLabel("Kết quả:");
+        outputLabelAsymmetric.setFont(labelFont);
+        asymmetricPanel.add(outputLabelAsymmetric, gbc);
 
         gbc.gridx = 1;
         gbc.gridy = 6;
@@ -755,8 +825,11 @@ public class AppView extends JFrame {
         inputSignature.setFont(new Font("Arial", Font.PLAIN, 16));
         JScrollPane scrollSignature = new JScrollPane(inputSignature);
         JButton createSignatureButton = new JButton("Tạo chữ ký");
+        createSignatureButton.setFont(buttonFont);
         JButton verifySignatureButton = new JButton("Xác minh chữ ký");
+        verifySignatureButton.setFont(buttonFont);
         JComboBox<String> signatureAlgorithmBox = new JComboBox<>(new String[]{"SHA-256", "SHA-512"});
+        signatureAlgorithmBox.setFont(comboFont);
         JTextArea outputSignatureText = new JTextArea(6, 35);
         outputSignatureText.setFont(new Font("Arial", Font.PLAIN, 16));
         outputSignatureText.setEditable(false);
@@ -765,13 +838,16 @@ public class AppView extends JFrame {
 
         // Nút chọn file
         JButton chooseSignatureFileButton = new JButton("Chọn File");
+        chooseSignatureFileButton.setFont(buttonFont);
         JTextField signatureFilePathField = new JTextField(35);
         signatureFilePathField.setEditable(false);
 
         // Căn chỉnh các thành phần
         gbc.gridx = 0;
         gbc.gridy = 0;
-        signaturePanel.add(new JLabel("Nhập văn bản:"), gbc);
+        JLabel inpputTextLabelSignature = new JLabel("Nhập văn bản:");
+        inpputTextLabelSignature.setFont(labelFont);
+        signaturePanel.add(inpputTextLabelSignature, gbc);
 
         gbc.gridx = 1;
         gbc.gridy = 0;
@@ -788,7 +864,9 @@ public class AppView extends JFrame {
 
         gbc.gridx = 0;
         gbc.gridy = 2;
-        signaturePanel.add(new JLabel("Chọn thuật toán chữ ký:"), gbc);
+        JLabel chooseLabelSignature = new JLabel("Chọn thuật toán chữ ký:");
+        chooseLabelSignature.setFont(labelFont);
+        signaturePanel.add(chooseLabelSignature, gbc);
 
         gbc.gridx = 1;
         gbc.gridy = 2;
@@ -805,7 +883,9 @@ public class AppView extends JFrame {
         // Output
         gbc.gridx = 0;
         gbc.gridy = 4;
-        signaturePanel.add(new JLabel("Kết quả:"), gbc);
+        JLabel outputLabelSignature = new JLabel("Kết quả:");
+        outputLabelSignature.setFont(labelFont);
+        signaturePanel.add(outputLabelSignature, gbc);
 
         gbc.gridx = 1;
         gbc.gridy = 4;
